@@ -1,0 +1,5 @@
+{
+  "name": "Neon Air Hockey",
+  "description": "A fast-paced, neon-styled Air Hockey game featuring single-player (vs CPU) with multiple difficulty levels and local two-player support.",
+  "requestFramePermissions": []
+}

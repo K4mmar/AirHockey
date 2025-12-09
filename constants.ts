@@ -1,0 +1,14 @@
+export const PADDLE_RADIUS = 30;
+export const PUCK_RADIUS = 15;
+export const GOAL_SIZE_RATIO = 0.35; // 35% of width
+export const MAX_SPEED = 18;
+export const FRICTION = 0.985;
+export const DEAD_ZONE_PCT = 0.14; // Percentage of height for center dead zone
+export const GAME_DURATION_SEC = 120;
+export const CORNER_BLOWER_SIZE = 100;
+export const CORNER_BLOWER_FORCE = 0.4;
+export const TABLE_COLOR = '#1e293b'; // slate-800
+export const DEAD_ZONE_COLOR = '#0f172a'; // slate-900
+export const P1_COLOR = '#3b82f6'; // blue-500
+export const P2_COLOR = '#ef4444'; // red-500
+export const PUCK_COLOR = '#ffffff';
