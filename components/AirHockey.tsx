@@ -2,7 +2,6 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { GameStatus, GameMode, Difficulty, Player, Puck, DIFFICULTY_CONFIG } from '../types';
 import * as Constants from '../constants';
 import { GameMenu } from './GameMenu';
-import { Pause } from 'lucide-react';
 
 const INITIAL_POS = { x: 0, y: 0 }; // Placeholder, set on resize
 
@@ -152,7 +151,7 @@ export const AirHockey: React.FC = () => {
       if (Math.abs(player.velocity.x) < 1 && Math.abs(player.velocity.y) < 1) {
          const speed = Math.sqrt(puck.velocity.x ** 2 + puck.velocity.y ** 2);
          // Reflect
-         const dp = puck.velocity.x * nx + puck.velocity.y * ny; // dot product
+         // const dp = puck.velocity.x * nx + puck.velocity.y * ny; // dot product (unused)
          // v_new = v_old - 2 * (v_old . n) * n
          // We do a simplified "bounce" adding a bit of energy
          puck.velocity.x += nx * speed * 0.6;
@@ -459,8 +458,8 @@ export const AirHockey: React.FC = () => {
   };
 
   const startGame = (mode: GameMode, diff: Difficulty) => {
-    gameState.current.scoreP1 = 0;
-    gameState.current.scoreP2 = 0;
+    gameState.current.p1.score = 0; // Fix: Access score on p1 object
+    gameState.current.p2.score = 0; // Fix: Access score on p2 object
     gameState.current.mode = mode;
     gameState.current.difficulty = diff;
     gameState.current.timeLeft = Constants.GAME_DURATION_SEC;

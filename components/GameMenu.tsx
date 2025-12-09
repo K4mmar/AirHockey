@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameStatus, Difficulty } from '../types';
-import { RefreshCcw, User, Users, Play, Pause, XCircle } from 'lucide-react';
+import { RefreshCcw, User, Users, Play, XCircle } from 'lucide-react';
 
 interface GameMenuProps {
   status: GameStatus;
@@ -46,7 +46,7 @@ export const GameMenu: React.FC<GameMenuProps> = ({
   status,
   scoreP1,
   scoreP2,
-  timeLeft,
+  // timeLeft, // Unused
   highScore,
   winner,
   onStartSingle,

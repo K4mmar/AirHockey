@@ -1,4 +1,3 @@
-import React from 'react';
 import { AirHockey } from './components/AirHockey';
 
 function App() {
