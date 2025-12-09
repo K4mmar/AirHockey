@@ -141,19 +141,13 @@ export const AirHockey: React.FC = () => {
       // Simple physics approximation for air hockey feel
       const forceMultiplier = 1.15;
       
-      // Reflect puck velocity relative to normal? Actually simpler approach works well for arcade:
       // Blend puck existing velocity with paddle hit velocity
-      
       puck.velocity.x = (puck.velocity.x * 0.4) + (player.velocity.x * forceMultiplier);
       puck.velocity.y = (puck.velocity.y * 0.4) + (player.velocity.y * forceMultiplier);
 
       // Add minimum bounce if paddle is stationary but puck hits it
       if (Math.abs(player.velocity.x) < 1 && Math.abs(player.velocity.y) < 1) {
          const speed = Math.sqrt(puck.velocity.x ** 2 + puck.velocity.y ** 2);
-         // Reflect
-         // const dp = puck.velocity.x * nx + puck.velocity.y * ny; // dot product (unused)
-         // v_new = v_old - 2 * (v_old . n) * n
-         // We do a simplified "bounce" adding a bit of energy
          puck.velocity.x += nx * speed * 0.6;
          puck.velocity.y += ny * speed * 0.6;
       }
@@ -351,7 +345,7 @@ export const AirHockey: React.FC = () => {
        puck.velocity.x += (Math.random() - 0.5) * 0.05;
     }
 
-    // Slope/Gravity in dead zone? (Optional, from snippet)
+    // Slope/Gravity in dead zone?
     // Adding slight slope to prevent puck stalling in center
     if (puck.pos.y > s.dimensions.deadZoneTop && puck.pos.y < s.dimensions.deadZoneBottom) {
        const slope = 0.02;
@@ -458,8 +452,8 @@ export const AirHockey: React.FC = () => {
   };
 
   const startGame = (mode: GameMode, diff: Difficulty) => {
-    gameState.current.p1.score = 0; // Fix: Access score on p1 object
-    gameState.current.p2.score = 0; // Fix: Access score on p2 object
+    gameState.current.p1.score = 0;
+    gameState.current.p2.score = 0;
     gameState.current.mode = mode;
     gameState.current.difficulty = diff;
     gameState.current.timeLeft = Constants.GAME_DURATION_SEC;
@@ -494,20 +488,28 @@ export const AirHockey: React.FC = () => {
 
   // --- Input Handling ---
 
-  const handleTouch = (e: React.TouchEvent | React.MouseEvent) => {
+  const handleInput = useCallback((e: TouchEvent | MouseEvent) => {
+     // Prevent default browser scrolling/zooming
+     if (e.cancelable && (e.type === 'touchmove' || e.type === 'touchstart')) {
+        e.preventDefault();
+     }
+
      const s = gameState.current;
      if (s.status !== GameStatus.PLAYING) return;
      
      // Normalize to array of points
-     let points: {x: number, y: number, id?: number}[] = [];
+     let points: {x: number, y: number}[] = [];
      
-     if ('touches' in e) {
+     if (window.TouchEvent && e instanceof TouchEvent) {
         for (let i = 0; i < e.touches.length; i++) {
-           points.push({ x: e.touches[i].clientX, y: e.touches[i].clientY, id: e.touches[i].identifier });
+           points.push({ x: e.touches[i].clientX, y: e.touches[i].clientY });
         }
      } else {
         // Mouse
-        points.push({ x: (e as React.MouseEvent).clientX, y: (e as React.MouseEvent).clientY });
+        const me = e as MouseEvent;
+        // Only track mouse move if button is down
+        if (me.type === 'mousemove' && me.buttons !== 1) return;
+        points.push({ x: me.clientX, y: me.clientY });
      }
 
      const { width, height, deadZoneTop, deadZoneBottom } = s.dimensions;
@@ -539,7 +541,7 @@ export const AirHockey: React.FC = () => {
         if (p.pos.x < pr) p.pos.x = pr;
         if (p.pos.x > width - pr) p.pos.x = width - pr;
      });
-  };
+  }, []);
 
   // Pause Logic
   const togglePause = () => {
@@ -569,12 +571,33 @@ export const AirHockey: React.FC = () => {
     resize();
     requestRef.current = requestAnimationFrame(loop);
     
+    // Bind native events for passive: false
+    const canvas = canvasRef.current;
+    if (canvas) {
+        const onTouch = (e: TouchEvent) => handleInput(e);
+        const onMouse = (e: MouseEvent) => handleInput(e);
+
+        canvas.addEventListener('touchstart', onTouch, { passive: false });
+        canvas.addEventListener('touchmove', onTouch, { passive: false });
+        canvas.addEventListener('mousedown', onMouse);
+        canvas.addEventListener('mousemove', onMouse);
+
+        return () => {
+            window.removeEventListener('resize', resize);
+            if (requestRef.current) cancelAnimationFrame(requestRef.current);
+            canvas.removeEventListener('touchstart', onTouch);
+            canvas.removeEventListener('touchmove', onTouch);
+            canvas.removeEventListener('mousedown', onMouse);
+            canvas.removeEventListener('mousemove', onMouse);
+        };
+    }
+
     return () => {
         window.removeEventListener('resize', resize);
         if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [handleInput]);
 
   // --- Formatted Time ---
   const min = Math.floor(uiState.timeLeft / 60);
@@ -646,13 +669,6 @@ export const AirHockey: React.FC = () => {
        <canvas
           ref={canvasRef}
           className="block w-full h-full touch-none"
-          onTouchStart={handleTouch}
-          onTouchMove={handleTouch}
-          onMouseDown={handleTouch}
-          onMouseMove={(e) => {
-             // Only track mouse move if button is down
-             if (e.buttons === 1) handleTouch(e);
-          }}
        />
     </div>
   );
