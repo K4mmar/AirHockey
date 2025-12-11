@@ -489,8 +489,8 @@ export const AirHockey: React.FC = () => {
   // --- Input Handling ---
 
   const handleInput = useCallback((e: TouchEvent | MouseEvent) => {
-     // Prevent default browser scrolling/zooming
-     if (e.cancelable && (e.type === 'touchmove' || e.type === 'touchstart')) {
+     // Explicitly prevent default to stop scrolling
+     if (e.cancelable) {
         e.preventDefault();
      }
 
@@ -573,6 +573,18 @@ export const AirHockey: React.FC = () => {
     
     // Bind native events for passive: false
     const canvas = canvasRef.current;
+    
+    // Global touch prevention to ensure no scrolling happens even if touch starts outside canvas
+    const preventAll = (e: Event) => e.preventDefault();
+    
+    // Lock everything when component mounts
+    document.body.addEventListener('touchmove', preventAll, { passive: false });
+    // Prevent iOS zoom gestures
+    // @ts-ignore - gesturestart is non-standard but vital for iOS
+    document.addEventListener('gesturestart', preventAll, { passive: false });
+    // @ts-ignore
+    document.addEventListener('gesturechange', preventAll, { passive: false });
+
     if (canvas) {
         const onTouch = (e: TouchEvent) => handleInput(e);
         const onMouse = (e: MouseEvent) => handleInput(e);
@@ -589,12 +601,20 @@ export const AirHockey: React.FC = () => {
             canvas.removeEventListener('touchmove', onTouch);
             canvas.removeEventListener('mousedown', onMouse);
             canvas.removeEventListener('mousemove', onMouse);
+            
+            // Clean global locks
+            document.body.removeEventListener('touchmove', preventAll);
+            // @ts-ignore
+            document.removeEventListener('gesturestart', preventAll);
+            // @ts-ignore
+            document.removeEventListener('gesturechange', preventAll);
         };
     }
 
     return () => {
         window.removeEventListener('resize', resize);
         if (requestRef.current) cancelAnimationFrame(requestRef.current);
+        document.body.removeEventListener('touchmove', preventAll);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleInput]);
@@ -669,6 +689,7 @@ export const AirHockey: React.FC = () => {
        <canvas
           ref={canvasRef}
           className="block w-full h-full touch-none"
+          style={{ touchAction: 'none' }}
        />
     </div>
   );
