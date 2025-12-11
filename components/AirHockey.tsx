@@ -39,7 +39,8 @@ export const AirHockey: React.FC = () => {
     timeLeft: Constants.GAME_DURATION_SEC,
     highScore: parseInt(localStorage.getItem('neonHockeyHighScore') || '0'),
     winner: null as string | null,
-    mode: null as 'single' | 'multi' | null
+    mode: null as 'single' | 'multi' | null,
+    isFullscreen: false
   });
 
   // Helper to sync ref to state infrequently
@@ -54,6 +55,28 @@ export const AirHockey: React.FC = () => {
       mode: s.mode === GameMode.SINGLE_PLAYER ? 'single' : 'multi',
       winner: winnerOverride || prev.winner
     }));
+  }, []);
+
+  // Fullscreen management
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch((err) => {
+            console.log(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+  }, []);
+
+  // Update fullscreen state listener
+  useEffect(() => {
+    const handleFsChange = () => {
+        setUiState(prev => ({ ...prev, isFullscreen: !!document.fullscreenElement }));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
   // --- Core Logic Helpers ---
@@ -460,6 +483,11 @@ export const AirHockey: React.FC = () => {
     gameState.current.status = GameStatus.PLAYING;
     gameState.current.lastTick = Date.now();
     
+    // Try to force fullscreen on game start
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    }
+
     resetPositions();
     syncUi();
   };
@@ -668,6 +696,7 @@ export const AirHockey: React.FC = () => {
           highScore={uiState.highScore}
           winner={uiState.winner}
           gameMode={uiState.mode}
+          isFullscreen={uiState.isFullscreen}
           onStartSingle={() => {
               gameState.current.status = GameStatus.DIFFICULTY_SELECT;
               syncUi();
@@ -684,6 +713,7 @@ export const AirHockey: React.FC = () => {
              resetPositions();
              syncUi();
           }}
+          onToggleFullscreen={toggleFullscreen}
        />
 
        <canvas

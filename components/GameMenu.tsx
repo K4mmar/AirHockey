@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameStatus, Difficulty } from '../types';
-import { RefreshCcw, User, Users, Play, XCircle } from 'lucide-react';
+import { RefreshCcw, User, Users, Play, XCircle, Maximize, Minimize } from 'lucide-react';
 
 interface GameMenuProps {
   status: GameStatus;
@@ -10,18 +10,20 @@ interface GameMenuProps {
   gameMode: 'single' | 'multi' | null;
   highScore: number;
   winner: string | null;
+  isFullscreen: boolean;
   onStartSingle: () => void;
   onStartMulti: () => void;
   onSelectDifficulty: (diff: Difficulty) => void;
   onResume: () => void;
   onRestart: () => void;
   onQuit: () => void;
+  onToggleFullscreen: () => void;
 }
 
 const MenuButton: React.FC<{ 
   onClick: () => void; 
   children: React.ReactNode; 
-  variant?: 'primary' | 'danger' | 'success' | 'outline';
+  variant?: 'primary' | 'danger' | 'success' | 'outline' | 'ghost';
   className?: string;
 }> = ({ onClick, children, variant = 'primary', className = '' }) => {
   let bgClass = '';
@@ -30,6 +32,7 @@ const MenuButton: React.FC<{
     case 'danger': bgClass = 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-500/50'; break;
     case 'success': bgClass = 'bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-emerald-500/50'; break;
     case 'outline': bgClass = 'bg-transparent border-2 border-slate-500 text-slate-400 hover:border-slate-300 hover:text-slate-200'; break;
+    case 'ghost': bgClass = 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white backdrop-blur-sm'; break;
   }
 
   return (
@@ -49,17 +52,29 @@ export const GameMenu: React.FC<GameMenuProps> = ({
   // timeLeft, // Unused
   highScore,
   winner,
+  isFullscreen,
   onStartSingle,
   onStartMulti,
   onSelectDifficulty,
   onResume,
   onRestart,
-  onQuit
+  onQuit,
+  onToggleFullscreen
 }) => {
   if (status === GameStatus.PLAYING) return null;
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 animate-fade-in">
+      
+      {/* Absolute top right fullscreen toggle */}
+      <button 
+        onClick={onToggleFullscreen}
+        className="absolute top-4 right-4 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        title="Toggle Fullscreen"
+      >
+        {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
+      </button>
+
       <h1 className="text-4xl md:text-6xl font-black text-white mb-2 tracking-tighter drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
         NEON HOCKEY
       </h1>
@@ -75,6 +90,10 @@ export const GameMenu: React.FC<GameMenuProps> = ({
             </MenuButton>
             <MenuButton onClick={onStartMulti} variant="primary">
               <Users size={20} /> 2 Players
+            </MenuButton>
+            <MenuButton onClick={onToggleFullscreen} variant="ghost" className="mt-2 !w-auto !px-6 !py-2 !text-sm">
+                {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />} 
+                {isFullscreen ? ' Exit Fullscreen' : ' Fullscreen'}
             </MenuButton>
             
             <div className="mt-8 text-center text-slate-400 text-sm max-w-xs">
